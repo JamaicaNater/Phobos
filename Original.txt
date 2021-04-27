@@ -1,0 +1,15 @@
+addi $t0, $zero, 12
+add $t0, $t1, $t2
+and $t0, $t1, $t2
+or $t0, $t1, $t2
+slt $t0, $t1, $t2
+beq $t0, $t1, 69
+beq $t0, $t1, 12
+sub $t0, $t1, $t2
+beq $t0, $t1,420
+bne $t0, $t1, 420
+j 420
+lw $t0, 12($t0)
+sw $t0, 12($t0)
+
+
