@@ -1,18 +1,25 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <cmath>
 
 using namespace std;
 
+// Class definitions
 class Instruction
 {
 public:
-    string raw_string,
-        opcode;
+        string opcode;
 
     string binToHex (string str)
     {
+        if (str.length() == 16)
+            str = "00000100" + str + "00";
+        if (str.length() == 26)
+            str = "0000" + str + "00";
+
+
         string hex_value;
         while (str.length() != 0)
         {
@@ -104,26 +111,29 @@ public:
     bool is_branch = false,
          is_load_store = false;
 
+    static unordered_set<string> branch_code_set,
+                                 load_store_code_set;
+
+
     I_Type( string instr, string op )
     {
         string bin_opcode = instr.substr(0,6);
-        if (bin_opcode == "000100" || bin_opcode == "000101")
-            is_branch = true;
-
-        if (bin_opcode == "100100" || bin_opcode == "100000" || bin_opcode == "100101" || bin_opcode == "100001"
-            || bin_opcode == "100011" || bin_opcode == "101001" || bin_opcode == "101000" || bin_opcode == "101011")
-            is_load_store = true;
 
         opcode = op;
-        rs = '$' + (instr.substr(6, 5));
+        rs = '$' + binToDec(instr.substr(6, 5));
         rt = '$' + binToDec(instr.substr(11, 5));
+        imm = binToDec(instr.substr(16,16));
 
-        if (is_branch)
-            imm =  binToHex(instr.substr(16,16));
-        else
-            imm = binToDec(instr.substr(16,16));
+        if (branch_code_set.find(bin_opcode) != branch_code_set.end() )
+            is_branch = true;
+
+        if (load_store_code_set.find(bin_opcode) != load_store_code_set.end() )
+            is_load_store = true;
     }
 };
+unordered_set<string> I_Type::branch_code_set = {"000100", "000101"};
+unordered_set<string> I_Type::load_store_code_set = {"100100", "100000", "100101", "100001", "100011", "101001", "101000", "101011"};
+
 
 class J_Type: public Instruction
 {
@@ -132,7 +142,7 @@ public:
 
     J_Type ( string instr, string op )
     {
-        imm =  binToHex(instr.substr(6,26));
+        imm = binToHex(instr.substr(6,26));
         /*
          *  instr.substr(0,26) - take the first 26 characters of the string
          *  that is then passed to the bin to hex method and copied into imm
@@ -141,14 +151,30 @@ public:
     }
 };
 
+// Functions
 string generateOutputString(string);
 
-unordered_map<string, string> Rmap,
-        Imap,
-        Jmap,
-        Funcmap;
+// GLOBALS
+unordered_map<string, string> R_BINARY_OPCODE_MAP,
+                              I_BINARY_OPCODE_MAP,
+                              J_BINARY_OPCODE_MAP,
+                              BINARY_FUNCTIONCODE_MAP;
 
-int main() {
+string INPUT_FILENAME,
+       OUPUT_FILENAME;
+
+int main(int argc, char** argv) {
+
+    if (argc != 3)
+    {
+        printf("Program requires 2 arguments, recieved %i", (int*)(argc - 1));
+        return -1;
+    }
+
+    INPUT_FILENAME = argv[1];
+    OUPUT_FILENAME = argv[2];
+
+
 /********************************************************Files*********************************************************/
     ifstream OPCodein,      // OP code in
              BINin,         // Instruction in;
@@ -163,7 +189,7 @@ int main() {
         return 1;
     }
 
-    BINin.open("Binary.txt");
+    BINin.open(INPUT_FILENAME);
     if (!ASMout)
     {
         cout << "Error opening input file (instructions)";
@@ -177,7 +203,7 @@ int main() {
         return 3;
     }
 
-    ASMout.open("Assembly.txt");
+    ASMout.open(OUPUT_FILENAME);
     if (!ASMout)
     {
         cout << "Error opening output file";
@@ -197,15 +223,15 @@ int main() {
         switch (type)
         {
             case 'R':
-                Rmap[opcode] = operation;
+                R_BINARY_OPCODE_MAP[opcode] = operation;
                 break;
 
             case 'I':
-                Imap[opcode] = operation;
+                I_BINARY_OPCODE_MAP[opcode] = operation;
                 break;
 
             case 'J':
-                Jmap[opcode] = operation;
+                J_BINARY_OPCODE_MAP[opcode] = operation;
                 break;
 
             default:
@@ -220,7 +246,7 @@ int main() {
 
         Funcin >> opcode >> opname;
 
-        Funcmap[opcode] = opname;
+        BINARY_FUNCTIONCODE_MAP[opcode] = opname;
     }
 
 
@@ -251,42 +277,39 @@ string generateOutputString(string bin_instr)
 
     // the .find() method returns the .end() iterator if the item is  not found in the list
     // we check if the item is in the list
-    if (Rmap.find(binary_opcode) != Rmap.end())
+    if (R_BINARY_OPCODE_MAP.find(binary_opcode) != R_BINARY_OPCODE_MAP.end())
     {
-        R_Type temp = R_Type(bin_instr, Rmap[binary_opcode]);
+        R_Type temp = R_Type(bin_instr, R_BINARY_OPCODE_MAP[binary_opcode]);
 
         opcode = temp.opcode;
         string bin_funct_code = bin_instr.substr(26, 6);
 
         if (binary_opcode == "000000")
-            opcode = Funcmap[bin_funct_code];
+            opcode = BINARY_FUNCTIONCODE_MAP[bin_funct_code];
 
         if (temp.shamt == "0")
-            output = opcode + " " +  temp.rd + " " + temp.rs + " " + temp.rt + "\n";
+            output = opcode + " " +  temp.rd + ", " + temp.rs + ", " + temp.rt + "\n";
         else
-            output = opcode + " " + temp.rd + " " + temp.rs + " " + temp.shamt + "(" + temp.rt + ")\n";
+            output = opcode + " " + temp.rd + ", " + temp.rs + ", " + temp.shamt + "(" + temp.rt + ")\n";
     }
 
-    if (Imap.find(binary_opcode) != Imap.end())
+    if (I_BINARY_OPCODE_MAP.find(binary_opcode) != I_BINARY_OPCODE_MAP.end())
     {
-        I_Type temp = I_Type(bin_instr, Imap[binary_opcode]);
+        I_Type temp = I_Type(bin_instr, I_BINARY_OPCODE_MAP[binary_opcode]);
 
-        output = temp.opcode  + " " + temp.rs + " " + temp.rt + " " + temp.imm + "\n";
-
-        if (temp.is_branch)
-            output = temp.opcode  + " " + temp.rs + " " + temp.rt + " 0x" + temp.imm + "\n";
+        output = temp.opcode  + " " + temp.rs + ", " + temp.rt + ", " + temp.imm + "\n";
 
         if (temp.is_load_store)
             if (atoi(temp.imm.c_str()) > 0)
-                output = temp.opcode  + " " + temp.rs + " (" +  temp.imm + ")" + temp.rt  + "\n";
+                output = temp.opcode  + " " + temp.rs + ", (" +  temp.imm + ")" + temp.rt  + "\n";
             else
-                output = temp.opcode  + " " + temp.rs + " " + temp.rt  + "\n";
+                output = temp.opcode  + " " + temp.rs + ", " + temp.rt  + "\n";
     }
 
-    if (Jmap.find(binary_opcode) != Jmap.end())
+    if (J_BINARY_OPCODE_MAP.find(binary_opcode) != J_BINARY_OPCODE_MAP.end())
     {
-        J_Type temp = J_Type(bin_instr, Jmap[binary_opcode]);
-        output = temp.opcode + " " + temp.imm + "\n";
+        J_Type temp = J_Type(bin_instr, J_BINARY_OPCODE_MAP[binary_opcode]);
+        output = temp.opcode + " 0x" + temp.imm + "\n";
     }
 
     return output;
