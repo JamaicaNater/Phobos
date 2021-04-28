@@ -115,11 +115,11 @@ public:
             is_load_store = true;
 
         opcode = op;
-        rs = '$' + binToDec(instr.substr(6, 5));
+        rs = '$' + (instr.substr(6, 5));
         rt = '$' + binToDec(instr.substr(11, 5));
 
         if (is_branch)
-            imm = binToHex(instr.substr(16,16));
+            imm =  binToHex(instr.substr(16,16));
         else
             imm = binToDec(instr.substr(16,16));
     }
@@ -132,7 +132,7 @@ public:
 
     J_Type ( string instr, string op )
     {
-        imm =  "0x" + binToHex(instr.substr(6,26));
+        imm =  binToHex(instr.substr(6,26));
         /*
          *  instr.substr(0,26) - take the first 26 characters of the string
          *  that is then passed to the bin to hex method and copied into imm
@@ -286,7 +286,7 @@ string generateOutputString(string bin_instr)
     if (Jmap.find(binary_opcode) != Jmap.end())
     {
         J_Type temp = J_Type(bin_instr, Jmap[binary_opcode]);
-        output + temp.opcode + " " + temp.imm + "\n";
+        output = temp.opcode + " " + temp.imm + "\n";
     }
 
     return output;
