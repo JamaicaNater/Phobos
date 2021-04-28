@@ -1,2 +1,3 @@
 # Phobos
-Phobos is a MIPS emulator that can read in assembly code and output that dat that an assembly program would
+Phobos is a MIPS dissembler,
+The prrgrma reads in binary code and output the code corresponding MIPS assemble code.
