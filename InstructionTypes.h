@@ -19,7 +19,7 @@ R_Type::R_Type(string instr, string op)
     rt = '$' + binToDec(instr.substr(11, 5));
     rd = '$' + binToDec(instr.substr(16,5));
     shamt = binToDec(instr.substr(21,5));
-    funct = binToHex(instr.substr(26, 5));
+    //funct = binToHex(instr.substr(26, 5));
 }
 
 
