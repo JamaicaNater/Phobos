@@ -13,7 +13,7 @@ public:
 string Instruction::binToDec(string str)
 {
     int decimal = 0,
-            big_endian_pos = 0;
+        big_endian_pos = 0;
 
     for (int i = str.length()-1; i >= 0; i--)
     {
