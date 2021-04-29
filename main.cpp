@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
     if (argc != 3)
     {
-        printf("Program requires 2 arguments, recieved %i", (int*)(argc - 1));
+        printf("Program requires 2 arguments, received %i", (argc - 1));
         return -1;
     }
 
@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
 
         OPCodein >> type >> opcode >> operation;
 
+        // Lookup Opcode corresponding to binary value
         switch (type)
         {
             case 'R':
@@ -111,10 +112,6 @@ int main(int argc, char** argv) {
     string binary_instruction;   // each line of instruction
     while (BINin >> binary_instruction)
     {
-
-        string binary_opcode, // opcode in binary stored here, used as an index for hashmap
-               opcode;
-
         if (binary_instruction.length() != 32)
         {
             cout << "Input code invalid" << endl;
@@ -129,39 +126,45 @@ int main(int argc, char** argv) {
 
 string generateOutputString(string bin_instr)
 {
-    string binary_opcode = bin_instr.substr(0, 6), // Extract the first 6 characters of the line (opcode is first 6 bits)
+    // Extract the first 6 characters of the line (opcode is first 6 bits)
+    string binary_opcode = bin_instr.substr(0, 6),
            opcode,
-           output = "Invalid Opcode\n";
+           output = "Invalid Opcode\n"; // Default output
+
 
     // the .find() method returns the .end() iterator if the item is  not found in the list
     // we check if the item is in the list
     if (R_BINARY_OPCODE_MAP.find(binary_opcode) != R_BINARY_OPCODE_MAP.end())
     {
-        R_Type temp = R_Type(bin_instr, R_BINARY_OPCODE_MAP[binary_opcode]);
+        R_Type assembly_line = R_Type(bin_instr, R_BINARY_OPCODE_MAP[binary_opcode]);
 
-        opcode = temp.opcode;
-        string bin_funct_code = bin_instr.substr(26, 6);
+        opcode = assembly_line.opcode;
+        string binary_function_code = bin_instr.substr(26, 6);
 
         if (binary_opcode == "000000")
-            opcode = BINARY_FUNCTIONCODE_MAP[bin_funct_code];
+            opcode = BINARY_FUNCTIONCODE_MAP[binary_function_code];
 
-        if (temp.shamt == "0")
-            output = opcode + " " +  temp.rd + ", " + temp.rs + ", " + temp.rt + "\n";
+        // If the shift amount is zero that there is nothing to shift
+        if (assembly_line.shamt == "0")
+            output = opcode + " " + assembly_line.rd + ", " + assembly_line.rs + ", " + assembly_line.rt + "\n";
         else
-            output = opcode + " " + temp.rd + ", " + temp.rs + ", " + temp.shamt + "(" + temp.rt + ")\n";
+            output = opcode + " " + assembly_line.rd + ", " + assembly_line.rs + ", " + assembly_line.shamt
+                    + "(" + assembly_line.rt + ")\n";
     }
 
     if (I_BINARY_OPCODE_MAP.find(binary_opcode) != I_BINARY_OPCODE_MAP.end())
     {
-        I_Type temp = I_Type(bin_instr, I_BINARY_OPCODE_MAP[binary_opcode]);
+        I_Type assembly_line = I_Type(bin_instr, I_BINARY_OPCODE_MAP[binary_opcode]);
 
-        output = temp.opcode  + " " + temp.rs + ", " + temp.rt + ", " + temp.imm + "\n";
+        output = assembly_line.opcode + " " + assembly_line.rs + ", " + assembly_line.rt + ", " + assembly_line.imm
+                + "\n";
 
-        if (temp.is_load_store)
-            if (atoi(temp.imm.c_str()) > 0)
-                output = temp.opcode  + " " + temp.rs + ", (" +  temp.imm + ")" + temp.rt  + "\n";
+        if (assembly_line.is_load_store)
+            if (atoi(assembly_line.imm.c_str()) > 0)
+                output = assembly_line.opcode + " " + assembly_line.rs + ", (" + assembly_line.imm + ")"
+                        + assembly_line.rt + "\n";
             else
-                output = temp.opcode  + " " + temp.rs + ", " + temp.rt  + "\n";
+                output = assembly_line.opcode + " " + assembly_line.rs + ", " + assembly_line.rt + "\n";
     }
 
     if (J_BINARY_OPCODE_MAP.find(binary_opcode) != J_BINARY_OPCODE_MAP.end())
