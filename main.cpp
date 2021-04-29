@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     }
 
 
-    string binary_instruction;   // each line of instruction
+    string binary_instruction;
     while (BINin >> binary_instruction)
     {
         if (binary_instruction.length() != 32)

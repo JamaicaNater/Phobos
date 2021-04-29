@@ -19,7 +19,7 @@ R_Type::R_Type(string instr, string op)
     rt = '$' + binToDec(instr.substr(11, 5));
     rd = '$' + binToDec(instr.substr(16,5));
     shamt = binToDec(instr.substr(21,5));
-    //funct = binToHex(instr.substr(26, 5));
+    funct = binToHex(instr.substr(26, 5));
 }
 
 
@@ -69,10 +69,6 @@ public:
 J_Type::J_Type ( string instr, string op )
 {
     imm = binToHex(instr.substr(6,26));
-    /*
-     *  instr.substr(0,26) - take the first 26 characters of the string
-     *  that is then passed to the bin to hex method and copied into imm
-     */
     opcode = op;
 }
 
